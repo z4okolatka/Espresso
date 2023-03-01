@@ -1,6 +1,8 @@
 from PyQt5 import uic
 import sqlite3 as sq
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QButtonGroup, QPushButton, QLineEdit, QPlainTextEdit, QRadioButton
+from ui.addUI import Ui_MainWindow as Ui_Add
+from ui.mainUI import Ui_MainWindow as Ui_Main
 import sys
 
 
@@ -15,10 +17,10 @@ def isfloat(x):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi('main.ui', self)
+        self.ui = Ui_Main()
+        self.ui.setupUi(self)
 
-        self.table: QTableWidget
-        self.table.itemSelectionChanged.connect(self.selectId)
+        self.ui.table.itemSelectionChanged.connect(self.selectId)
         self.loadTable()
 
     def addNewLine(self, row):
@@ -38,29 +40,29 @@ class MainWindow(QMainWindow):
         self.loadTable()
 
     def loadTable(self):
-        self.table.clear()
-        self.con = sq.connect("coffee.sqlite")
+        self.ui.table.clear()
+        self.con = sq.connect("data/coffee.sqlite")
         self.cur = self.con.execute("""
         SELECT * FROM coffee
         """)
         names = list(map(lambda x: x[0], self.cur.description))
         data = self.cur.fetchall()
 
-        self.table.setColumnCount(7)
-        self.table.setRowCount(len(data))
-        self.table.setHorizontalHeaderLabels(names)
+        self.ui.table.setColumnCount(7)
+        self.ui.table.setRowCount(len(data))
+        self.ui.table.setHorizontalHeaderLabels(names)
         for i, row in enumerate(data):
             for j, string in enumerate(row):
                 item = QTableWidgetItem()
                 item.setText(str(string))
-                self.table.setItem(i, j, item)
+                self.ui.table.setItem(i, j, item)
 
     def selectId(self):
-        selected = self.table.selectedItems()
+        selected = self.ui.table.selectedItems()
         if not selected:
             return
-        add.idInput.setText(selected[0].text())
-        add.editRadioBtn.toggle()
+        add.ui.idInput.setText(selected[0].text())
+        add.ui.editRadioBtn.toggle()
 
     def closeEvent(self, event):
         add.deleteLater()
@@ -70,95 +72,84 @@ class MainWindow(QMainWindow):
 class AdditionalWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi('addEditCoffeeForm.ui', self)
+        self.ui = Ui_Add()
+        self.ui.setupUi(self)
 
-        self.formatSelect: QButtonGroup
-        self.addRadioBtn: QRadioButton
-        self.editRadioBtn: QRadioButton
-        self.actionBtn: QPushButton
-        self.idInput: QLineEdit
-        self.sortInput: QLineEdit
-        self.roastDegreeInput: QLineEdit
-        self.typeInput: QLineEdit
-        self.priceInput: QLineEdit
-        self.volumeInput: QLineEdit
-        self.tasteDescriptionInput: QPlainTextEdit
-
-        self.formatSelect.buttonToggled.connect(self.changeState)
-        self.idInput.textEdited.connect(self.changeSelection)
-        self.idInput.textChanged.connect(self.replaceData)
-        self.actionBtn.clicked.connect(self.doAction)
+        self.ui.formatSelect.buttonToggled.connect(self.changeState)
+        self.ui.idInput.textEdited.connect(self.changeSelection)
+        self.ui.idInput.textChanged.connect(self.replaceData)
+        self.ui.actionBtn.clicked.connect(self.doAction)
 
     def doAction(self):
-        if self.addRadioBtn.isChecked():
-            if not isfloat(self.priceInput.text()) or\
-                    not isfloat(self.volumeInput.text()):
+        if self.ui.addRadioBtn.isChecked():
+            if not isfloat(self.ui.priceInput.text()) or\
+                    not isfloat(self.ui.volumeInput.text()):
                 return
             main.addNewLine((
-                self.sortInput.text(),
-                self.roastDegreeInput.text(),
-                self.typeInput.text(),
-                self.tasteDescriptionInput.toPlainText(),
-                self.priceInput.text(),
-                self.volumeInput.text()
+                self.ui.sortInput.text(),
+                self.ui.roastDegreeInput.text(),
+                self.ui.typeInput.text(),
+                self.ui.tasteDescriptionInput.toPlainText(),
+                self.ui.priceInput.text(),
+                self.ui.volumeInput.text()
             ))
-        elif self.editRadioBtn.isChecked():
-            if not isfloat(self.priceInput.text()) or\
-                    not isfloat(self.volumeInput.text()):
+        elif self.ui.editRadioBtn.isChecked():
+            if not isfloat(self.ui.priceInput.text()) or\
+                    not isfloat(self.ui.volumeInput.text()):
                 return
             main.editLine(self.idInput.text(), (
-                self.sortInput.text(),
-                self.roastDegreeInput.text(),
-                self.typeInput.text(),
-                self.tasteDescriptionInput.toPlainText(),
-                self.priceInput.text(),
-                self.volumeInput.text()
+                self.ui.sortInput.text(),
+                self.ui.roastDegreeInput.text(),
+                self.ui.typeInput.text(),
+                self.ui.tasteDescriptionInput.toPlainText(),
+                self.ui.priceInput.text(),
+                self.ui.volumeInput.text()
             ))
 
     def changeState(self):
-        if self.addRadioBtn.isChecked():
-            self.actionBtn.setText("Добавить")
-            self.idInput.setText('')
+        if self.ui.addRadioBtn.isChecked():
+            self.ui.actionBtn.setText("Добавить")
+            self.ui.idInput.setText('')
             self.clearData()
-            main.table.clearSelection()
+            main.ui.table.clearSelection()
         else:
-            self.actionBtn.setText("Изменить")
+            self.ui.actionBtn.setText("Изменить")
 
     def changeSelection(self):
         try:
-            main.table.selectRow(int(self.idInput.text()) - 1)
+            main.ui.table.selectRow(int(self.idInput.text()) - 1)
         except Exception:
             pass
 
     def clearData(self):
         for i in (
-            self.sortInput,
-            self.roastDegreeInput,
-            self.typeInput,
-            self.tasteDescriptionInput,
-            self.priceInput,
-            self.volumeInput
+            self.ui.sortInput,
+            self.ui.roastDegreeInput,
+            self.ui.typeInput,
+            self.ui.tasteDescriptionInput,
+            self.ui.priceInput,
+            self.ui.volumeInput
         ):
             i.clear()
 
     def replaceData(self):
-        self.idInput.setStyleSheet('')
-        id_ = self.idInput.text()
+        self.ui.idInput.setStyleSheet('')
+        id_ = self.ui.idInput.text()
         row = main.cur.execute(
             'SELECT * FROM coffee WHERE ID LIKE ?', (id_,)
         ).fetchone()
         if not row:
             if id_:
-                self.idInput.setStyleSheet('color: red;')
+                self.ui.idInput.setStyleSheet('color: red;')
             return
         row = list(map(str, row))
         for i, x in enumerate((
-            self.sortInput,
-            self.roastDegreeInput,
-            self.typeInput,
-            self.tasteDescriptionInput,
-            self.priceInput,
-            self.volumeInput
+            self.ui.sortInput,
+            self.ui.roastDegreeInput,
+            self.ui.typeInput,
+            self.ui.tasteDescriptionInput,
+            self.ui.priceInput,
+            self.ui.volumeInput
         ), start=1):
             if isinstance(x, QLineEdit):
                 x.setText(row[i])
